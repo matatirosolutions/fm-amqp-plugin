@@ -1,0 +1,17 @@
+build/
+.DS_Store
+.idea/
+*.fmplugin
+*.fmx64
+*.fmx
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+
+# SDK headers and binaries are covered by Claris licence — don't commit them
+sdk/FMWrapper/
+sdk/Libraries/
+
+# third_party/ static libs ARE committed; only exclude build intermediates
+build/openssl-tmp/
