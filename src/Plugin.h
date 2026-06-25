@@ -16,4 +16,5 @@ enum FunctionID : int {
     kFn_DeclareQueue    = 8,
     kFn_DeclareExchange = 9,
     kFn_BindQueue       = 10,
+    kFn_TLSTest         = 11,
 };

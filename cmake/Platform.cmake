@@ -70,7 +70,7 @@ elseif(WIN32)
 
 elseif(UNIX)
     find_package(Threads REQUIRED)
-    list(APPEND PLATFORM_LIBS Threads::Threads)
+    list(APPEND PLATFORM_LIBS Threads::Threads dl)  # dl needed for dladdr in CACert.cpp
 
     if(CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "aarch64")
         set(_LINUX_ARCH "arm64")

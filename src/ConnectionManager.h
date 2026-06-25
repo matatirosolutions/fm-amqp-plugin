@@ -17,7 +17,10 @@ struct ConnectionConfig {
     std::string password = "guest";
 
     // TLS — leave caCertPath empty to use plain TCP
-    bool        useTLS      = false;
+    bool        useTLS         = false;
+    bool        verifyPeer     = true;
+    bool        verifyHostname = true;
+    std::string tlsVersion;   // "1.2" to cap at TLS 1.2; empty = allow all
     std::string caCertPath;
     std::string clientCertPath;
     std::string clientKeyPath;
@@ -72,6 +75,9 @@ public:
     // Per-property configuration (call before Connect):
     //   TLS.Enabled, TLS.CACert, TLS.ClientCert, TLS.ClientKey
     std::optional<std::string> SetProperty(const std::string& key, const std::string& value);
+
+    // Returns the current config (TLS properties set via SetProperty).
+    ConnectionConfig GetConfig() const;
 
 private:
     ConnectionManager() = default;

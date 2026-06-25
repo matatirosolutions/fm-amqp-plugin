@@ -1,4 +1,5 @@
 #include "ConnectionManager.h"
+#include "CACert.h"
 #include "Plugin.h"
 
 #include <rabbitmq-c/amqp.h>
@@ -6,6 +7,7 @@
 // ssl_socket.h included only when ENABLE_SSL_SUPPORT is on
 #if defined(AMQP_HAS_SSL)
 #  include <rabbitmq-c/ssl_socket.h>
+#  include <openssl/ssl.h>
 #endif
 
 #include <cstring>
@@ -84,14 +86,30 @@ std::optional<std::string> ConnectionManager::ConnectInternal(const ConnectionCo
         socket = amqp_ssl_socket_new(conn_);
         if (!socket) { DisconnectInternal(); return "amqp_ssl_socket_new failed"; }
 
-        amqp_ssl_socket_set_verify_peer(socket, 1);
-        amqp_ssl_socket_set_verify_hostname(socket, 1);
+        amqp_ssl_socket_set_verify_peer(socket, cfg.verifyPeer ? 1 : 0);
+        amqp_ssl_socket_set_verify_hostname(socket, cfg.verifyHostname ? 1 : 0);
 
-        if (!cfg.caCertPath.empty()) {
-            int rc = amqp_ssl_socket_set_cacert(socket, cfg.caCertPath.c_str());
-            if (rc != AMQP_STATUS_OK) {
-                DisconnectInternal();
-                return std::string("Failed to load CA cert: ") + amqp_error_string2(rc);
+        if (!cfg.tlsVersion.empty()) {
+            SSL_CTX* ssl_ctx = static_cast<SSL_CTX*>(amqp_ssl_socket_get_context(socket));
+            if (cfg.tlsVersion == "1.2") {
+                SSL_CTX_set_max_proto_version(ssl_ctx, TLS1_2_VERSION);
+            } else if (cfg.tlsVersion == "1.3") {
+                SSL_CTX_set_min_proto_version(ssl_ctx, TLS1_3_VERSION);
+            }
+        }
+
+        if (cfg.verifyPeer) {
+            // Use explicit CA path, fall back to bundled Mozilla CA bundle
+            const std::string caPath = !cfg.caCertPath.empty()
+                ? cfg.caCertPath
+                : GetBundledCACertPath();
+
+            if (!caPath.empty()) {
+                int rc = amqp_ssl_socket_set_cacert(socket, caPath.c_str());
+                if (rc != AMQP_STATUS_OK) {
+                    DisconnectInternal();
+                    return std::string("Failed to load CA cert: ") + amqp_error_string2(rc);
+                }
             }
         }
 
@@ -283,15 +301,24 @@ bool ConnectionManager::IsConnected() const
 
 // ── properties ───────────────────────────────────────────────────────────────
 
+ConnectionConfig ConnectionManager::GetConfig() const
+{
+    std::lock_guard lock(mutex_);
+    return config_;
+}
+
 std::optional<std::string> ConnectionManager::SetProperty(
     const std::string& key, const std::string& value)
 {
     std::lock_guard lock(mutex_);
 
-    if      (key == "TLS.Enabled")    config_.useTLS         = (value == "1" || value == "true");
-    else if (key == "TLS.CACert")     config_.caCertPath     = value;
-    else if (key == "TLS.ClientCert") config_.clientCertPath = value;
-    else if (key == "TLS.ClientKey")  config_.clientKeyPath  = value;
+    if      (key == "TLS.Enabled")       config_.useTLS         = (value == "1" || value == "true");
+    else if (key == "TLS.VerifyPeer")    config_.verifyPeer     = (value != "0" && value != "false");
+    else if (key == "TLS.VerifyHostname")config_.verifyHostname = (value != "0" && value != "false");
+    else if (key == "TLS.Version")       config_.tlsVersion     = value;
+    else if (key == "TLS.CACert")        config_.caCertPath     = value;
+    else if (key == "TLS.ClientCert")    config_.clientCertPath = value;
+    else if (key == "TLS.ClientKey")     config_.clientKeyPath  = value;
     else return "Unknown property: " + key;
 
     return std::nullopt;

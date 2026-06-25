@@ -60,5 +60,7 @@ jobs:
         uses: actions/upload-artifact@v4.6.2
         with:
           name: AMQPFMPlugin-win
-          path: build\win\AMQPFMPlugin.fmx64
+          path: |
+            build\win\AMQPFMPlugin.fmx64
+            build\win\cacert.pem
           retention-days: 30

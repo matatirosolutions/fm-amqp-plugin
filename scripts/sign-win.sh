@@ -39,7 +39,7 @@ check_deps() {
         exit 1
     fi
 
-    for var in SIGN_ENGINE SIGN_MODULE SIGN_TOKEN SIGN_OBJECT SIGN_PASS; do
+    for var in SIGN_MODULE SIGN_TOKEN SIGN_OBJECT SIGN_PASS; do
         [ -n "${!var:-}" ] || { echo "Error: environment variable $var is not set."; exit 1; }
     done
 
@@ -55,17 +55,37 @@ check_deps() {
 sign() {
     local in_file="$1"
     local out_file="${in_file}.signed"
+    local tmp_der
+    local tmp_pem
+    tmp_der="$(mktemp /tmp/amqp-signing-cert-XXXXXX).der"
+    tmp_pem="$(mktemp /tmp/amqp-signing-cert-XXXXXX).pem"
+    trap 'rm -f "$tmp_der" "$tmp_pem"' RETURN
+
+    echo "==> Extracting signing certificate from token"
+    pkcs11-tool \
+        --module "$SIGN_MODULE" \
+        --login --pin "$SIGN_PASS" \
+        --read-object --type cert \
+        --label "$SIGN_OBJECT" \
+        --output-file "$tmp_der" 2>/dev/null
+    openssl x509 -inform DER -in "$tmp_der" -out "$tmp_pem"
+
     echo "==> Signing: $(basename "$in_file")"
+    local TOKEN="${SIGN_TOKEN// /%20}"
+    local OBJECT="${SIGN_OBJECT// /%20}"
+
+    OPENSSL_ENGINES="$(brew --prefix)/lib/engines-3" \
     osslsigncode sign \
-        -pkcs11engine  "$SIGN_ENGINE" \
-        -pkcs11module  "$SIGN_MODULE" \
-        -pkcs11cert    "pkcs11:token=$SIGN_TOKEN;object=$SIGN_OBJECT" \
-        -pass          "$SIGN_PASS" \
-        -ac            "$SIGN_CA" \
-        -n             "$SIGN_NAME" \
-        -ts            "$SIGN_TIMESTAMP" \
-        -in            "$in_file" \
-        -out           "$out_file"
+        -engine       pkcs11 \
+        -engineCtrl   "PIN:${SIGN_PASS}" \
+        -pkcs11module "$SIGN_MODULE" \
+        -key          "pkcs11:token=${TOKEN};object=${OBJECT};type=private" \
+        -certs        "$tmp_pem" \
+        -ac           "$SIGN_CA" \
+        -n            "$SIGN_NAME" \
+        -ts           "$SIGN_TIMESTAMP" \
+        -in           "$in_file" \
+        -out          "$out_file"
     mv "$out_file" "$in_file"
     echo "==> Verifying signature"
     osslsigncode verify -in "$in_file"

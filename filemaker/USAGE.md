@@ -42,12 +42,15 @@ AMQP_BindQueue( queueName ; exchangeName ; routingKey )
 
 Set properties **before** calling `AMQP_Connect`.
 
-| Property | Values | Notes |
-|---|---|---|
-| `TLS.Enabled` | `"1"` / `"0"` | Enable/disable TLS (requires TLS-enabled build) |
-| `TLS.CACert` | file path | Path to CA certificate (PEM) |
-| `TLS.ClientCert` | file path | Client certificate for mutual TLS |
-| `TLS.ClientKey` | file path | Client private key for mutual TLS |
+| Property | Values | Default | Notes |
+|---|---|---|---|
+| `TLS.Enabled` | `"1"` / `"0"` | `"0"` | Enable TLS. Use port 5671. |
+| `TLS.VerifyPeer` | `"1"` / `"0"` | `"1"` | Verify the server's certificate against the CA bundle. |
+| `TLS.VerifyHostname` | `"1"` / `"0"` | `"1"` | Verify the server hostname matches the certificate. |
+| `TLS.Version` | `"1.2"` / `"1.3"` | _(any)_ | Restrict to a specific TLS version. Leave unset to allow TLS 1.2 or 1.3. |
+| `TLS.CACert` | file path | _(bundled)_ | Path to a CA bundle (PEM). The plugin includes a Mozilla CA bundle and uses it by default — only set this if you need a custom or private CA. |
+| `TLS.ClientCert` | file path | | Client certificate for mutual TLS. |
+| `TLS.ClientKey` | file path | | Client private key for mutual TLS. |
 
 ## Example script — plain publish
 
@@ -75,9 +78,8 @@ Set Variable [ $r ; AMQP_Disconnect ]
 ## Example script — TLS with topology setup
 
 ```
-# Enable TLS
+# Enable TLS (bundled CA cert is used automatically)
 Set Variable [ $r ; AMQP_SetProperty( "TLS.Enabled" ; "1" ) ]
-Set Variable [ $r ; AMQP_SetProperty( "TLS.CACert" ; "/etc/ssl/certs/ca-certificates.crt" ) ]
 
 # Connect
 Set Variable [ $r ; AMQP_Connect( "rabbitmq.example.com" ; "5671" ; "/" ; "myuser" ; "mypassword" ) ]

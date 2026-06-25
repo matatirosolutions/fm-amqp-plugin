@@ -288,7 +288,6 @@ If you get `CKR_PIN_EXPIRED`, open SafeNet Authentication Client and change the 
 Add to `~/.zprofile`:
 
 ```bash
-export SIGN_ENGINE="/opt/homebrew/lib/engines-3/pkcs11.dylib"
 export SIGN_MODULE="/Library/Frameworks/eToken.framework/Versions/Current/libeToken.dylib"
 export SIGN_TOKEN="MatatiroSolutions"
 export SIGN_OBJECT="Matatiro Solutions Limited"
