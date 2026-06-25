@@ -10,7 +10,7 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.2.2
 
       # The FileMaker Plugin SDK is covered by the Claris licence and cannot be
       # committed. It is stored as an asset on the sdk-assets pre-release.
@@ -31,7 +31,7 @@ jobs:
       # rebuilds when we bump OPENSSL_VERSION in build-openssl-win.bat.
       - name: Cache OpenSSL
         id: cache-openssl
-        uses: actions/cache@v4
+        uses: actions/cache@v4.2.3
         with:
           path: third_party/openssl/win
           key: openssl-win-3.3.2
@@ -39,7 +39,7 @@ jobs:
       # Set up the MSVC developer environment so cl.exe, nmake, and ninja are on
       # PATH. Required for both the OpenSSL build and the CMake Ninja build.
       - name: Set up MSVC environment
-        uses: ilammy/msvc-dev-cmd@v1
+        uses: ilammy/msvc-dev-cmd@v1.13.0
         with:
           arch: x64
 
@@ -57,7 +57,7 @@ jobs:
         run: cmake --build build\win
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.6.2
         with:
           name: AMQPFMPlugin-win
           path: build\win\AMQPFMPlugin.fmx64
