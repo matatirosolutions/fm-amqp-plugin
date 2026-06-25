@@ -113,17 +113,32 @@ Docker builds static OpenSSL automatically on first run and caches it in `third_
 
 ### Windows
 
-Run from a **VS 2022 x64 Native Tools Command Prompt**:
+The Windows build runs on GitHub Actions (`build-windows.yml`) — no local Windows machine required.
 
-```bat
-rem Build static OpenSSL (first time only — needs Strawberry Perl)
-scripts\build-openssl-win.bat
+**One-time setup** — add two repository secrets (Settings → Secrets and variables → Actions):
 
-rem Build plugin
-scripts\build-win.bat
+- `FM_SDK_ZIP` — base64-encoded zip of the `sdk/` folder (Claris licence prevents committing it):
+  ```bash
+  zip -r sdk.zip sdk/
+  base64 -i sdk.zip | pbcopy   # paste into the secret
+  ```
+
+Then push to `main` (or trigger manually via Actions → Build Windows → Run workflow).
+
+**Download and sign locally** (requires `gh` and `osslsigncode`, and PKCS11 env vars — see script header):
+
+```bash
+scripts/sign-win.sh
 ```
 
-Output: `build\win\Release\AMQPFMPlugin.fmx64`
+This waits for the Actions run to complete, downloads the artifact, signs it with your code signing token, and places the signed binary at `build/win/signed/AMQPFMPlugin.fmx64`.
+
+To build locally instead (from a VS 2022 x64 Native Tools Command Prompt):
+
+```bat
+scripts\build-openssl-win.bat   rem first time only — needs Strawberry Perl
+scripts\build-win.bat
+```
 
 ---
 

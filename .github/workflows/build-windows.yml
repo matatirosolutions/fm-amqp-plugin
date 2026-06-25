@@ -1,0 +1,66 @@
+name: Build Windows
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # The FileMaker Plugin SDK is covered by the Claris licence and cannot be
+      # committed. It is stored as an asset on the sdk-assets pre-release.
+      # To update it: gh release upload sdk-assets sdk.zip --clobber
+      - name: Restore FileMaker SDK
+        shell: bash
+        run: gh release download sdk-assets --pattern sdk.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract FileMaker SDK
+        shell: pwsh
+        run: |
+          Expand-Archive -Path sdk.zip -DestinationPath . -Force
+          Remove-Item sdk.zip
+
+      # OpenSSL takes ~5 minutes to build; cache it keyed on version so it only
+      # rebuilds when we bump OPENSSL_VERSION in build-openssl-win.bat.
+      - name: Cache OpenSSL
+        id: cache-openssl
+        uses: actions/cache@v4
+        with:
+          path: third_party/openssl/win
+          key: openssl-win-3.3.2
+
+      # Set up the VS 2022 developer environment so nmake and cl.exe are on PATH.
+      # This is required by the OpenSSL build; cmake itself finds the toolchain
+      # through the Visual Studio generator without needing this.
+      - name: Set up MSVC environment
+        if: steps.cache-openssl.outputs.cache-hit != 'true'
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Build OpenSSL
+        if: steps.cache-openssl.outputs.cache-hit != 'true'
+        shell: cmd
+        run: scripts\build-openssl-win.bat
+
+      - name: Configure
+        shell: cmd
+        run: cmake -S . -B build\win -G "Visual Studio 17 2022" -A x64
+
+      - name: Build
+        shell: cmd
+        run: cmake --build build\win --config Release
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AMQPFMPlugin-win
+          path: build\win\Release\AMQPFMPlugin.fmx64
+          retention-days: 30
