@@ -17,3 +17,4 @@ FMX_PROC(fmx::errcode) Fn_DeclareQueue   (short funcId, const fmx::ExprEnv& env,
 FMX_PROC(fmx::errcode) Fn_DeclareExchange(short funcId, const fmx::ExprEnv& env, const fmx::DataVect& args, fmx::Data& result);
 FMX_PROC(fmx::errcode) Fn_BindQueue      (short funcId, const fmx::ExprEnv& env, const fmx::DataVect& args, fmx::Data& result);
 FMX_PROC(fmx::errcode) Fn_TLSTest        (short funcId, const fmx::ExprEnv& env, const fmx::DataVect& args, fmx::Data& result);
+FMX_PROC(fmx::errcode) Fn_Init           (short funcId, const fmx::ExprEnv& env, const fmx::DataVect& args, fmx::Data& result);

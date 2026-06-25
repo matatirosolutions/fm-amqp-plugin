@@ -19,6 +19,7 @@ All functions return `"OK"` on success or `"ERROR: <message>"` on failure.
 
 ```
 AMQP_Version()
+AMQP_Init()
 AMQP_SetProperty( propertyName ; value )
 AMQP_Connect( host ; port ; vhost ; username ; password )
 AMQP_Disconnect()
@@ -38,9 +39,17 @@ AMQP_DeclareExchange( exchangeName ; exchangeType ; durable )
 AMQP_BindQueue( queueName ; exchangeName ; routingKey )
 ```
 
+## AMQP_Init
+
+Resets all connection properties to their defaults and closes any open connection. Call this at the top of any connection setup script to guarantee a clean slate — particularly important when scripts may run in different orders or TLS requirements differ between connections.
+
+```
+Set Variable [ $r ; AMQP_Init() ]
+```
+
 ## TLS property reference
 
-Set properties **before** calling `AMQP_Connect`.
+Set properties **after** `AMQP_Init()` and **before** `AMQP_Connect()`.
 
 | Property | Values | Default | Notes |
 |---|---|---|---|
@@ -55,6 +64,8 @@ Set properties **before** calling `AMQP_Connect`.
 ## Example script — plain publish
 
 ```
+Set Variable [ $r ; AMQP_Init() ]
+
 # Connect
 Set Variable [ $r ; AMQP_Connect( "rabbitmq.example.com" ; "5672" ; "/" ; "myuser" ; "mypassword" ) ]
 If [ Left( $r ; 5 ) = "ERROR" ]
@@ -78,6 +89,8 @@ Set Variable [ $r ; AMQP_Disconnect ]
 ## Example script — TLS with topology setup
 
 ```
+Set Variable [ $r ; AMQP_Init() ]
+
 # Enable TLS (bundled CA cert is used automatically)
 Set Variable [ $r ; AMQP_SetProperty( "TLS.Enabled" ; "1" ) ]
 

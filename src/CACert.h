@@ -1,6 +1,10 @@
 #pragma once
-#include <string>
 
-// Returns the path to the bundled Mozilla CA bundle (cacert.pem), located
-// relative to the plugin binary itself. Returns an empty string if not found.
-std::string GetBundledCACertPath();
+#if defined(AMQP_HAS_SSL)
+#include <openssl/ssl.h>
+
+// Loads the bundled Mozilla CA certificate data (embedded at build time)
+// into the given SSL_CTX's trust store. Returns true on success.
+bool LoadBundledCACert(SSL_CTX* ctx);
+
+#endif

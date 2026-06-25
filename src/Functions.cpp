@@ -46,39 +46,30 @@ static int amqp_test_bio_read(BIO *b, char *out, int outl)
 
 static std::string RunOneTLSTest(const std::string& host, int port, bool useAmqpBio);
 
-static std::string RunRabbitmqStyleTest(const std::string& host, int port,
-                                        const std::string& caPath);
+static std::string RunRabbitmqStyleTest(const std::string& host, int port);
 
 static std::string RunTLSTest(const std::string& host, int port)
 {
     std::string a = std::string("=== Standard BIO (SSL_set_fd) ===\n") + RunOneTLSTest(host, port, false);
     std::string b = std::string("=== AMQP-style custom BIO (like rabbitmq-c) ===\n") + RunOneTLSTest(host, port, true);
-    std::string caPath = GetBundledCACertPath();
-    std::string c = std::string("=== rabbitmq-c style (CA cert, no VERIFY_NONE) ===\ncacert: ")
-                  + (caPath.empty() ? "(not found)" : caPath) + "\n"
-                  + RunRabbitmqStyleTest(host, port, caPath);
+    std::string c = std::string("=== rabbitmq-c style (embedded CA cert, no VERIFY_NONE) ===\n")
+                  + RunRabbitmqStyleTest(host, port);
     return a + "\n" + b + "\n" + c;
 }
 
 // Replicates rabbitmq-c's full SSL_CTX setup: TLS min 1.2, PARTIAL_WRITE,
-// no AUTO_RETRY, loads cacert.pem, no explicit VERIFY_NONE.
+// no AUTO_RETRY, loads embedded CA cert, no explicit VERIFY_NONE.
 // This is what actually runs when AMQP_Connect uses TLS.
-static std::string RunRabbitmqStyleTest(const std::string& host, int port,
-                                        const std::string& caPath)
+static std::string RunRabbitmqStyleTest(const std::string& host, int port)
 {
     std::ostringstream out;
 
     SSL_CTX* ctx = SSL_CTX_new(TLS_client_method());
     if (!ctx) return "SSL_CTX_new failed";
-    // Match rabbitmq-c exactly
     SSL_CTX_set_min_proto_version(ctx, TLS1_2_VERSION);
     SSL_CTX_set_mode(ctx, SSL_MODE_ENABLE_PARTIAL_WRITE);
     SSL_CTX_clear_mode(ctx, SSL_MODE_AUTO_RETRY);
-    // Load CA cert (what amqp_ssl_socket_set_cacert does)
-    if (!caPath.empty()) {
-        int rc = SSL_CTX_load_verify_locations(ctx, caPath.c_str(), nullptr);
-        out << "SSL_CTX_load_verify_locations(\"" << caPath << "\"): " << (rc==1?"OK":"FAILED") << "\n";
-    }
+    out << "LoadBundledCACert: " << (LoadBundledCACert(ctx) ? "OK" : "FAILED") << "\n";
     // rabbitmq-c does NOT call SSL_CTX_set_verify — default is SSL_VERIFY_NONE
 
     struct addrinfo hints{}, *ai = nullptr;
@@ -397,6 +388,21 @@ FMX_PROC(fmx::errcode) Fn_Disconnect(
 {
     try {
         ConnectionManager::Instance().Disconnect();
+        SetResultOK(result);
+    }
+    catch (const std::exception& e) {
+        SetResultError(e.what(), result);
+    }
+    return 0;
+}
+
+// ── AMQP_Init() ─────────────────────────────────────────────────────────────
+
+FMX_PROC(fmx::errcode) Fn_Init(
+    short, const fmx::ExprEnv&, const fmx::DataVect&, fmx::Data& result)
+{
+    try {
+        ConnectionManager::Instance().Reset();
         SetResultOK(result);
     }
     catch (const std::exception& e) {

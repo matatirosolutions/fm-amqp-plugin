@@ -99,17 +99,25 @@ std::optional<std::string> ConnectionManager::ConnectInternal(const ConnectionCo
         }
 
         if (cfg.verifyPeer) {
-            // Use explicit CA path, fall back to bundled Mozilla CA bundle
-            const std::string caPath = !cfg.caCertPath.empty()
-                ? cfg.caCertPath
-                : GetBundledCACertPath();
+            SSL_CTX* ssl_ctx = static_cast<SSL_CTX*>(amqp_ssl_socket_get_context(socket));
+            bool caLoaded = false;
 
-            if (!caPath.empty()) {
-                int rc = amqp_ssl_socket_set_cacert(socket, caPath.c_str());
+            if (!cfg.caCertPath.empty()) {
+                // User-supplied CA path
+                int rc = amqp_ssl_socket_set_cacert(socket, cfg.caCertPath.c_str());
                 if (rc != AMQP_STATUS_OK) {
                     DisconnectInternal();
                     return std::string("Failed to load CA cert: ") + amqp_error_string2(rc);
                 }
+                caLoaded = true;
+            } else {
+                // Embedded Mozilla CA bundle
+                caLoaded = LoadBundledCACert(ssl_ctx);
+            }
+
+            if (!caLoaded) {
+                DisconnectInternal();
+                return std::string("Failed to load CA cert bundle");
             }
         }
 
@@ -300,6 +308,13 @@ bool ConnectionManager::IsConnected() const
 }
 
 // ── properties ───────────────────────────────────────────────────────────────
+
+void ConnectionManager::Reset()
+{
+    std::lock_guard lock(mutex_);
+    DisconnectInternal();
+    config_ = ConnectionConfig{};
+}
 
 ConnectionConfig ConnectionManager::GetConfig() const
 {

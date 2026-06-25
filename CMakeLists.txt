@@ -21,11 +21,25 @@ set(PLUGIN_SOURCES
 )
 
 set(CACERT_FILE "${CMAKE_SOURCE_DIR}/third_party/cacert/cacert.pem")
+set(CACERT_HEADER "${CMAKE_BINARY_DIR}/generated/cacert_data.h")
+
+# Embed cacert.pem as a C byte array at configure time
+execute_process(
+    COMMAND ${CMAKE_COMMAND}
+        -DINPUT=${CACERT_FILE}
+        -DOUTPUT=${CACERT_HEADER}
+        -P "${CMAKE_SOURCE_DIR}/cmake/GenerateCACertHeader.cmake"
+    RESULT_VARIABLE _cacert_result
+)
+if(NOT _cacert_result EQUAL 0)
+    message(FATAL_ERROR "Failed to generate cacert_data.h from cacert.pem")
+endif()
 
 add_library(AMQPFMPlugin MODULE ${PLUGIN_SOURCES})
 
 target_include_directories(AMQPFMPlugin PRIVATE
     src
+    "${CMAKE_BINARY_DIR}/generated"        # cacert_data.h
     sdk/FMWrapper   # sdk/FMWrapper/FMWrapper/*.h — include as "FMWrapper/FMXExtern.h"
     ${rabbitmq-c_SOURCE_DIR}/include
     ${rabbitmq-c_BINARY_DIR}/include       # generated export.h
@@ -83,17 +97,6 @@ if(APPLE)
             "$<TARGET_BUNDLE_DIR:AMQPFMPlugin>/Contents/PkgInfo"
         COMMENT "Copying PkgInfo into bundle"
     )
-    # Bundle the Mozilla CA bundle into Contents/Resources/
-    if(EXISTS "${CACERT_FILE}")
-        add_custom_command(TARGET AMQPFMPlugin POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E make_directory
-                "$<TARGET_BUNDLE_DIR:AMQPFMPlugin>/Contents/Resources"
-            COMMAND ${CMAKE_COMMAND} -E copy
-                "${CACERT_FILE}"
-                "$<TARGET_BUNDLE_DIR:AMQPFMPlugin>/Contents/Resources/cacert.pem"
-            COMMENT "Bundling cacert.pem into bundle resources"
-        )
-    endif()
     # Sign the bundle. CODESIGN_IDENTITY can be overridden at cmake time:
     #   -DCODESIGN_IDENTITY="Developer ID Application: ..."  (distribution)
     #   -DCODESIGN_IDENTITY="-"                              (ad-hoc, default)
@@ -114,15 +117,6 @@ elseif(WIN32)
         PREFIX ""
     )
     target_sources(AMQPFMPlugin PRIVATE resources/win/Plugin.rc)
-    # Copy cacert.pem next to the .fmx64 so it can be found at runtime
-    if(EXISTS "${CACERT_FILE}")
-        add_custom_command(TARGET AMQPFMPlugin POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy
-                "${CACERT_FILE}"
-                "$<TARGET_FILE_DIR:AMQPFMPlugin>/cacert.pem"
-            COMMENT "Copying cacert.pem next to plugin"
-        )
-    endif()
 elseif(UNIX)
     # FMWrapper is already loaded by FileMaker Server when the plugin is dlopen'd,
     # so the dynamic linker finds it without a hard rpath. We list the known FMS
@@ -138,13 +132,4 @@ elseif(UNIX)
 /opt/FileMaker/FileMaker Server/Web Publishing/:\
 /opt/FileMaker/lib"
     )
-    # Copy cacert.pem next to the .fmx so it can be found at runtime
-    if(EXISTS "${CACERT_FILE}")
-        add_custom_command(TARGET AMQPFMPlugin POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy
-                "${CACERT_FILE}"
-                "$<TARGET_FILE_DIR:AMQPFMPlugin>/cacert.pem"
-            COMMENT "Copying cacert.pem next to plugin"
-        )
-    endif()
 endif()

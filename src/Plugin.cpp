@@ -114,6 +114,14 @@ static const FunctionDef kFunctions[] = {
         2, 2,
         Fn_TLSTest
     },
+    {
+        kFn_Init,
+        PLUGIN_ID "_Init",
+        PLUGIN_ID "_Init()",
+        "Resets all connection properties to their defaults and closes any open connection. Call at the top of a connection setup script for a clean slate.",
+        0, 0,
+        Fn_Init
+    },
 };
 
 static constexpr int kFunctionCount = sizeof(kFunctions) / sizeof(kFunctions[0]);

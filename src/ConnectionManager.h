@@ -72,6 +72,10 @@ public:
         const std::string& exchangeType,
         bool durable);
 
+    // Disconnects and resets all properties to defaults.
+    // Call at the top of any connection setup script for a clean slate.
+    void Reset();
+
     // Per-property configuration (call before Connect):
     //   TLS.Enabled, TLS.CACert, TLS.ClientCert, TLS.ClientKey
     std::optional<std::string> SetProperty(const std::string& key, const std::string& value);
