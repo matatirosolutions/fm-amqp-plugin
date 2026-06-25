@@ -21,16 +21,17 @@ Built on [rabbitmq-c](https://github.com/alanxz/rabbitmq-c) with bundled static 
 
 All functions return `"OK"` on success or `"ERROR: <message>"` on failure.
 
-| Function | Description |
-|---|---|
-| `AMQP_Version()` | Returns the plugin version string |
-| `AMQP_SetProperty( name ; value )` | Sets a connection property (see TLS reference below) |
-| `AMQP_Connect( host ; port ; vhost ; user ; password )` | Opens a connection and channel |
-| `AMQP_Publish( exchange ; routingKey ; body )` | Publishes a message |
-| `AMQP_DeclareQueue( queueName )` | Declares a durable queue |
-| `AMQP_DeclareExchange( name ; type ; durable )` | Declares an exchange (`"direct"`, `"topic"`, `"fanout"`, `"headers"`) |
-| `AMQP_BindQueue( queue ; exchange ; routingKey )` | Binds a queue to an exchange |
-| `AMQP_Disconnect()` | Closes the connection |
+| Function | Description                                                                       |
+|---|-----------------------------------------------------------------------------------|
+| `AMQP_Version` | Returns the plugin version string                                                 |
+| `AMQP_Init` | Resets all connection properties to their defaults and closes any open connection |
+| `AMQP_SetProperty( name ; value )` | Sets a connection property (see TLS reference in [filemaker/USAGE.md](filemaker/USAGE.md))                                |
+| `AMQP_Connect( host ; port ; vhost ; user ; password )` | Opens a connection and channel                                                    |
+| `AMQP_Publish( exchange ; routingKey ; body )` | Publishes a message                                                               |
+| `AMQP_DeclareQueue( queueName )` | Declares a durable queue                                                          |
+| `AMQP_DeclareExchange( name ; type ; durable )` | Declares an exchange (`"direct"`, `"topic"`, `"fanout"`, `"headers"`)             |
+| `AMQP_BindQueue( queue ; exchange ; routingKey )` | Binds a queue to an exchange                                                      |
+| `AMQP_Disconnect` | Closes the connection                                                             |
 
 See [filemaker/USAGE.md](filemaker/USAGE.md) for detailed examples and the TLS property reference.
 
