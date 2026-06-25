@@ -22,14 +22,23 @@ FMX_ExternCallPtr gFMX_ExternCallPtr(nullptr);
 
 // ── Function registration table ──────────────────────────────────────────────
 
+// FMX_PROC expands to `retType __stdcall` on Windows, which is invalid syntax
+// inside a function pointer declaration (the calling convention must go inside
+// the parens: `retType (__stdcall *ptr)(...)`). Define the type explicitly.
+#ifdef _WIN32
+using PluginFuncPtr = fmx::errcode (__stdcall *)(short, const fmx::ExprEnv&, const fmx::DataVect&, fmx::Data&);
+#else
+using PluginFuncPtr = fmx::errcode (*)(short, const fmx::ExprEnv&, const fmx::DataVect&, fmx::Data&);
+#endif
+
 struct FunctionDef {
-    int         id;
-    const char* name;
-    const char* prototype;  // shown in FileMaker's formula editor
-    const char* description;
-    int         minArgs;
-    int         maxArgs;
-    FMX_PROC(fmx::errcode) (*handler)(short, const fmx::ExprEnv&, const fmx::DataVect&, fmx::Data&);
+    int           id;
+    const char*   name;
+    const char*   prototype;    // shown in FileMaker's formula editor
+    const char*   description;
+    int           minArgs;
+    int           maxArgs;
+    PluginFuncPtr handler;
 };
 
 static const FunctionDef kFunctions[] = {
