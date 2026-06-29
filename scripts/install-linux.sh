@@ -112,6 +112,7 @@ info "Installed to: ${DEST}"
 
 echo ""
 echo -e "${YELLOW}Note:${NC} Restart FileMaker Server (or the fmse service) to load the new plugin:"
-echo "  sudo systemctl restart fmserver"
+echo "  sudo service fmshelper restart"
+echo "Then enable it through the admin console or API."
 echo ""
 echo -e "${GREEN}Done.${NC} AMQP FM Plugin v${VERSION} installed for Ubuntu ${VERSION_ID} ${ARCH_TAG}."
