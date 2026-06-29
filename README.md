@@ -39,14 +39,40 @@ See [filemaker/USAGE.md](filemaker/USAGE.md) for detailed examples and the TLS p
 
 ## Installation
 
+### macOS and Windows
+
+Download the latest release from [GitHub Releases](https://github.com/matatirosolutions/fm-amqp-plugin/releases/latest), then copy the plugin to the appropriate folder:
+
 | Platform | Extension folder |
 |---|---|
 | macOS (current user) | `~/Library/Application Support/FileMaker/Extensions/` |
 | macOS (all users) | `/Library/Application Support/FileMaker/Extensions/` |
 | Windows | `C:\Program Files\FileMaker\FileMaker Pro\Extensions\` |
-| FileMaker Server (Linux) | `/opt/FileMaker/FileMaker Server/Database Server/Extensions/` |
 
-Quit FileMaker (or stop fmse on Server) before installing, then restart.
+Quit FileMaker before installing, then restart.
+
+### Linux (FileMaker Server)
+
+An install script handles Ubuntu version and architecture detection, downloads the correct binary from the latest release, and places it in the extensions directory.
+
+Run directly on the server (requires internet access and sudo):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/matatirosolutions/fm-amqp-plugin/main/scripts/install-linux.sh | sudo bash
+```
+
+Or download first and inspect before running:
+
+```bash
+curl -fsSL -o install-linux.sh https://raw.githubusercontent.com/matatirosolutions/fm-amqp-plugin/main/scripts/install-linux.sh
+sudo bash install-linux.sh
+```
+
+The script supports Ubuntu 22.04 and 24.04 on x86_64 and arm64. After installation, restart FileMaker Server to load the plugin:
+
+```bash
+sudo systemctl restart fmserver
+```
 
 ---
 
@@ -168,16 +194,15 @@ filemaker/USAGE.md    FileMaker scripting guide and function reference
 
 ## TLS
 
-TLS is enabled at build time when static OpenSSL is present in `third_party/openssl/`. All pre-built binaries include TLS support.
-
-Set properties before calling `AMQP_Connect`:
+TLS is enabled at build time when static OpenSSL is present in `third_party/openssl/`. All pre-built binaries include TLS support with a bundled Mozilla CA certificate — no external CA file required.
 
 ```
+AMQP_Init()
 AMQP_SetProperty( "TLS.Enabled" ; "1" )
-AMQP_SetProperty( "TLS.CACert"  ; "/path/to/ca.pem" )
+AMQP_Connect( "broker.example.com" ; "5671" ; "/" ; "user" ; "password" )
 ```
 
-Default AMQP port is `5672` (plain) or `5671` (TLS).
+Default AMQP port is `5672` (plain) or `5671` (TLS). See [filemaker/USAGE.md](filemaker/USAGE.md) for the full TLS property reference.
 
 ---
 
