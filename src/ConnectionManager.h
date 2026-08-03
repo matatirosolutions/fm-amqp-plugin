@@ -20,7 +20,7 @@ struct ConnectionConfig {
     bool        useTLS         = false;
     bool        verifyPeer     = true;
     bool        verifyHostname = true;
-    std::string tlsVersion;   // "1.2" to cap at TLS 1.2; empty = allow all
+    std::string tlsVersion;   // "1.2" or "1.3" to pin to exactly that version; empty = allow all
     std::string caCertPath;
     std::string clientCertPath;
     std::string clientKeyPath;

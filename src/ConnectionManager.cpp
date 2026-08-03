@@ -91,10 +91,15 @@ std::optional<std::string> ConnectionManager::ConnectInternal(const ConnectionCo
 
         if (!cfg.tlsVersion.empty()) {
             SSL_CTX* ssl_ctx = static_cast<SSL_CTX*>(amqp_ssl_socket_get_context(socket));
+            // Pin min AND max so the handshake can't be downgraded to an older protocol —
+            // setting only a max (e.g. "1.2" without a matching min) leaves TLS 1.0/1.1
+            // negotiable, which defeats the point of pinning.
             if (cfg.tlsVersion == "1.2") {
+                SSL_CTX_set_min_proto_version(ssl_ctx, TLS1_2_VERSION);
                 SSL_CTX_set_max_proto_version(ssl_ctx, TLS1_2_VERSION);
             } else if (cfg.tlsVersion == "1.3") {
                 SSL_CTX_set_min_proto_version(ssl_ctx, TLS1_3_VERSION);
+                SSL_CTX_set_max_proto_version(ssl_ctx, TLS1_3_VERSION);
             }
         }
 
