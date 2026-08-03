@@ -18,4 +18,5 @@ enum FunctionID : int {
     kFn_BindQueue       = 10,
     kFn_TLSTest         = 11,
     kFn_Init            = 12,
+    kFn_IsConnected     = 13,
 };

@@ -411,6 +411,26 @@ FMX_PROC(fmx::errcode) Fn_Init(
     return 0;
 }
 
+// ── AMQP_IsConnected( { performActiveCheck } ) ───────────────────────────────
+// No argument: cheap check of internal state only (no network activity).
+// Any argument: also round-trips a request to the broker to confirm it's actually
+// responsive, not just that we hold a connection handle.
+
+FMX_PROC(fmx::errcode) Fn_IsConnected(
+    short, const fmx::ExprEnv&, const fmx::DataVect& args, fmx::Data& result)
+{
+    try {
+        bool connected = (args.Size() > 0)
+            ? ConnectionManager::Instance().Ping()
+            : ConnectionManager::Instance().IsConnected();
+        SetResultString(connected ? "1" : "0", result);
+    }
+    catch (const std::exception& e) {
+        SetResultError(e.what(), result);
+    }
+    return 0;
+}
+
 // ── AMQP_BindQueue( queueName ; exchangeName ; routingKey ) ─────────────────
 
 FMX_PROC(fmx::errcode) Fn_BindQueue(

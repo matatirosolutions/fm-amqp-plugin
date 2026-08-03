@@ -307,6 +307,20 @@ bool ConnectionManager::IsConnected() const
     return conn_ != nullptr;
 }
 
+bool ConnectionManager::Ping()
+{
+    std::lock_guard lock(mutex_);
+
+    if (!conn_)
+        return false;
+
+    // Basic.Qos with the existing prefetch settings is a no-op RPC — it changes nothing
+    // but requires the broker to respond, so a successful reply proves the connection
+    // is genuinely alive rather than just present.
+    amqp_basic_qos(conn_, channel_, /*prefetch_size*/0, /*prefetch_count*/0, /*global*/0);
+    return !CheckReply(amqp_get_rpc_reply(conn_), "Ping").has_value();
+}
+
 // ── properties ───────────────────────────────────────────────────────────────
 
 void ConnectionManager::Reset()

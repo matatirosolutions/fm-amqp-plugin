@@ -51,7 +51,16 @@ public:
 
     void Disconnect();
     void Shutdown() noexcept;   // called on plugin unload; swallows exceptions
+
+    // Cheap check: true if a connection handle exists. Does NOT verify the socket is
+    // still alive — a silently-dropped connection (broker restart, network blip) is
+    // only reflected here once the next Publish/RPC call fails and reconnects.
     bool IsConnected() const;
+
+    // Round-trips a harmless, idempotent RPC (Basic.Qos) against the broker to confirm
+    // the connection is genuinely responsive, not just that we hold a handle for it.
+    // Returns false if there's no connection or the broker doesn't reply successfully.
+    bool Ping();
 
     // Declare a durable queue (idempotent — safe to call even if queue exists).
     // Returns nullopt on success, or an error message string.

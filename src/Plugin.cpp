@@ -122,6 +122,14 @@ static const FunctionDef kFunctions[] = {
         0, 0,
         Fn_Init
     },
+    {
+        kFn_IsConnected,
+        PLUGIN_ID "_IsConnected",
+        PLUGIN_ID "_IsConnected( { performActiveCheck } )",
+        "Returns 1 if connected, 0 if not. With no argument, checks internal state only (fast, no network activity). Pass any argument to also perform a live round-trip check against the broker.",
+        0, 1,
+        Fn_IsConnected
+    },
 };
 
 static constexpr int kFunctionCount = sizeof(kFunctions) / sizeof(kFunctions[0]);
