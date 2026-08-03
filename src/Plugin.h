@@ -16,7 +16,7 @@ enum FunctionID : int {
     kFn_DeclareQueue    = 8,
     kFn_DeclareExchange = 9,
     kFn_BindQueue       = 10,
-    kFn_TLSTest         = 11,
+    // 11 was kFn_TLSTest — removed; retired, not reused (IDs must stay stable across releases)
     kFn_Init            = 12,
     kFn_IsConnected     = 13,
 };

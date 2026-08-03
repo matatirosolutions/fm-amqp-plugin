@@ -107,14 +107,6 @@ static const FunctionDef kFunctions[] = {
         Fn_BindQueue
     },
     {
-        kFn_TLSTest,
-        PLUGIN_ID "_TLSTest",
-        PLUGIN_ID "_TLSTest( host ; port )",
-        "Diagnostic: runs a raw TLS+AMQP header test using OpenSSL directly (bypassing rabbitmq-c). Returns step-by-step results.",
-        2, 2,
-        Fn_TLSTest
-    },
-    {
         kFn_Init,
         PLUGIN_ID "_Init",
         PLUGIN_ID "_Init()",
