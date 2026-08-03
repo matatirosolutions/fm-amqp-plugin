@@ -56,7 +56,7 @@ Download FileMaker Plugin SDK 26 from the [Claris Developer portal](https://stor
 
 ```
 sdk/
-  FMWrapper/
+  Headers/
     FMWrapper/
       FMXExtern.h
       FMXTypes.h

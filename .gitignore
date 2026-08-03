@@ -10,7 +10,7 @@ cmake_install.cmake
 Makefile
 
 # SDK headers and binaries are covered by Claris licence — don't commit them
-sdk/FMWrapper/
+sdk/Headers/
 sdk/Libraries/
 
 # third_party/ static libs ARE committed; only exclude build intermediates
