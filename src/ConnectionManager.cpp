@@ -20,6 +20,14 @@ static amqp_bytes_t BytesFromString(const std::string& s)
     return amqp_bytes_t{ s.size(), const_cast<void*>(static_cast<const void*>(s.c_str())) };
 }
 
+// Same broker + identity, ignoring TLS/property settings (those are reconfigurable
+// on the same identity without needing a fresh one).
+static bool SameIdentity(const ConnectionConfig& a, const ConnectionConfig& b)
+{
+    return a.host == b.host && a.port == b.port &&
+           a.vhost == b.vhost && a.username == b.username;
+}
+
 std::optional<std::string> ConnectionManager::CheckReply(
     const amqp_rpc_reply_t_& reply, const char* context)
 {
@@ -177,6 +185,16 @@ std::optional<std::string> ConnectionManager::ConnectInternal(const ConnectionCo
 std::optional<std::string> ConnectionManager::Connect(const ConnectionConfig& config)
 {
     std::lock_guard lock(mutex_);
+
+    // This process holds a single connection at a time — refuse to silently swap it
+    // for a different broker/identity out from under whoever is already using it.
+    // Same identity is allowed through (e.g. a script reconnecting/refreshing).
+    if (conn_ && !SameIdentity(config_, config)) {
+        return "Already connected to " + config_.host + ":" + std::to_string(config_.port) +
+               " (vhost \"" + config_.vhost + "\", user \"" + config_.username + "\"). "
+               "Call " PLUGIN_ID "_Disconnect first before connecting to a different broker/identity.";
+    }
+
     return ConnectInternal(config);
 }
 

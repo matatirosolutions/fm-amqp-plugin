@@ -54,7 +54,9 @@ static const FunctionDef kFunctions[] = {
         kFn_Connect,
         PLUGIN_ID "_Connect",
         PLUGIN_ID "_Connect( host ; port ; vhost ; username ; password )",
-        "Opens a connection to an AMQP broker. Returns \"OK\" or an error string.",
+        "Opens a connection to an AMQP broker. Returns \"OK\" or an error string. "
+        "If already connected to a different broker/identity, fails rather than replacing it — call "
+        PLUGIN_ID "_Disconnect first.",
         5, 5,
         Fn_Connect
     },
