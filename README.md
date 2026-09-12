@@ -73,6 +73,7 @@ The script supports Ubuntu 22.04 and 24.04 on x86_64 and arm64. After installati
 ```bash
 sudo systemctl restart fmserver
 ```
+Finally enable the plugin through the FMS admin console or API. 
 
 ---
 

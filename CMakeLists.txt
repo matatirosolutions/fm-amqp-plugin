@@ -40,7 +40,7 @@ add_library(AMQPFMPlugin MODULE ${PLUGIN_SOURCES})
 target_include_directories(AMQPFMPlugin PRIVATE
     src
     "${CMAKE_BINARY_DIR}/generated"        # cacert_data.h
-    sdk/Headers     # sdk/Headers/FMWrapper/*.h — include as "FMWrapper/FMXExtern.h"
+    sdk/FMWrapper   # sdk/FMWrapper/FMWrapper/*.h — include as "FMWrapper/FMXExtern.h"
     ${rabbitmq-c_SOURCE_DIR}/include
     ${rabbitmq-c_BINARY_DIR}/include       # generated export.h
     ${rabbitmq-c_BINARY_DIR}/librabbitmq   # generated amqp_framing.h
